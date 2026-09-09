@@ -1,0 +1,19 @@
+{
+  "auth": {
+    "otp_sent": "OTP sent successfully to your registered mobile number",
+    "otp_verified": "OTP verified successfully",
+    "login_success": "Login successful"
+  },
+  "queue": {
+    "update": "Queue position updated. Estimated waiting time: {minutes} mins",
+    "approaching": "Your turn is approaching! Please prepare your produce."
+  },
+  "procurement": {
+    "arrived": "Farmer arrival confirmed at Procurement Centre",
+    "stage_complete": "Stage {stageNumber} ({stageName}) completed successfully",
+    "completed": "Procurement completed successfully. Thank you for your contribution!"
+  },
+  "documents": {
+    "reminder": "Please carry Aadhaar Card, Bank Passbook, and Land Passbook."
+  }
+}
