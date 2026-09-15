@@ -13,12 +13,18 @@ import type { CentrePricing } from '../../services/api/pricing.api';
 import { t } from '../../services/i18n';
 import { CalendarPlus, CheckCircle2, Sprout, Scale, Tag } from 'lucide-react';
 
+const DEFAULT_CROPS = [
+  { _id: 'paddy_default', name: 'Paddy', code: 'PADDY', unit: 'KG' },
+  { _id: 'wheat_default', name: 'Wheat', code: 'WHEAT', unit: 'KG' },
+  { _id: 'maize_default', name: 'Maize', code: 'MAIZE', unit: 'KG' }
+];
+
 export const BookSlotPage: React.FC = () => {
   const navigate = useNavigate();
-  const [crops, setCrops] = useState<any[]>([]);
+  const [crops, setCrops] = useState<any[]>(DEFAULT_CROPS);
   const [centres, setCentres] = useState<any[]>([]);
 
-  const [selectedCropId, setSelectedCropId] = useState('');
+  const [selectedCropId, setSelectedCropId] = useState('paddy_default');
   const [expectedQuantity, setExpectedQuantity] = useState('1000');
   const [selectedCentreId, setSelectedCentreId] = useState('');
   const [preferredDate, setPreferredDate] = useState(new Date().toISOString().slice(0, 10));
@@ -32,15 +38,24 @@ export const BookSlotPage: React.FC = () => {
   useEffect(() => {
     const loadInitialData = async () => {
       try {
-        const [cropRes, centreRes] = await Promise.all([
+        const [cropRes, centreRes] = await Promise.allSettled([
           centreApi.getCrops(),
           centreApi.getCentres()
         ]);
-        setCrops(cropRes.data || []);
-        setCentres(centreRes.data || []);
+        
+        let loadedCrops: any[] = DEFAULT_CROPS;
+        if (cropRes.status === 'fulfilled' && cropRes.value?.data?.length > 0) {
+          loadedCrops = cropRes.value.data;
+        }
+        setCrops(loadedCrops);
+        if (loadedCrops.length > 0) setSelectedCropId(loadedCrops[0]._id);
 
-        if (cropRes.data?.length > 0) setSelectedCropId(cropRes.data[0]._id);
-        if (centreRes.data?.length > 0) setSelectedCentreId(centreRes.data[0]._id);
+        let loadedCentres: any[] = [];
+        if (centreRes.status === 'fulfilled' && centreRes.value?.data?.length > 0) {
+          loadedCentres = centreRes.value.data;
+        }
+        setCentres(loadedCentres);
+        if (loadedCentres.length > 0) setSelectedCentreId(loadedCentres[0]._id);
       } catch (err) {
         console.error('Failed to load crops or centres', err);
       }

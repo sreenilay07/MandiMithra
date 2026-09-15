@@ -28,13 +28,14 @@ export const ManagerDashboard: React.FC = () => {
       const res = await managerApi.getDashboard();
       setDashboardData(res.data);
 
+      const cropRes = await centreApi.getCrops().catch(() => null);
+      if (cropRes?.data) {
+        setCrops(cropRes.data);
+      }
+
       if (res.data?.centre?._id) {
-        const [cRes, cropRes] = await Promise.all([
-          centreApi.getCounters(res.data.centre._id),
-          centreApi.getCrops()
-        ]);
-        setCounters(cRes.data || []);
-        setCrops(cropRes.data || []);
+        const cRes = await centreApi.getCounters(res.data.centre._id).catch(() => null);
+        setCounters(cRes?.data || []);
       }
     } catch (err) {
       console.warn('Failed to load manager dashboard', err);

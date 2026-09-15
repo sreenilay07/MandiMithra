@@ -12,10 +12,19 @@ router.use(protect);
 
 /**
  * @route GET /api/v1/crops
- * @desc List all available crops
+ * @desc List all available crops (Auto-seeds default crops if empty)
  */
 router.get('/', asyncWrapper(async (req, res) => {
-  const crops = await Crop.find({ status: 'ACTIVE' }).sort({ name: 1 });
+  let crops = await Crop.find({ status: 'ACTIVE' }).sort({ name: 1 });
+  if (!crops || crops.length === 0) {
+    const defaultCrops = [
+      { name: 'Paddy', code: 'PADDY', localNames: { en: 'Paddy', te: 'వరి ధాన్యం', hi: 'धान' }, unit: 'KG', defaultProcessingCapacity: 2000, requiredDocuments: ['Aadhaar Card', 'Bank Passbook', 'Land Passbook'] },
+      { name: 'Wheat', code: 'WHEAT', localNames: { en: 'Wheat', te: 'గోధుమలు', hi: 'गेहूं' }, unit: 'KG', defaultProcessingCapacity: 1800, requiredDocuments: ['Aadhaar Card', 'Bank Passbook', 'Land Passbook'] },
+      { name: 'Maize', code: 'MAIZE', localNames: { en: 'Maize', te: 'మొక్కజొన్న', hi: 'మక్క' }, unit: 'KG', defaultProcessingCapacity: 1500, requiredDocuments: ['Aadhaar Card', 'Bank Passbook'] }
+    ];
+    await Crop.insertMany(defaultCrops);
+    crops = await Crop.find({ status: 'ACTIVE' }).sort({ name: 1 });
+  }
   return sendSuccess(res, 'Crops retrieved', crops);
 }));
 

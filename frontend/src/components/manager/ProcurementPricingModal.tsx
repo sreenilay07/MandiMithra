@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Tag, Check, RefreshCw, X, AlertCircle } from 'lucide-react';
 import { pricingApi } from '../../services/api/pricing.api';
+import { centreApi } from '../../services/api/centre.api';
 import type { CentrePricing } from '../../services/api/pricing.api';
+
+const DEFAULT_CROPS = [
+  { _id: 'paddy_default', name: 'Paddy' },
+  { _id: 'wheat_default', name: 'Wheat' },
+  { _id: 'maize_default', name: 'Maize' }
+];
 
 interface ProcurementPricingModalProps {
   isOpen: boolean;
@@ -19,6 +26,7 @@ export const ProcurementPricingModal: React.FC<ProcurementPricingModalProps> = (
   onPriceUpdated
 }) => {
   const [activePrices, setActivePrices] = useState<CentrePricing[]>([]);
+  const [availableCrops, setAvailableCrops] = useState<Array<{ _id: string; name: string }>>([]);
   const [selectedCropId, setSelectedCropId] = useState<string>('');
   const [priceInput, setPriceInput] = useState<string>('');
   const [unitInput, setUnitInput] = useState<string>('Per Quintal');
@@ -45,11 +53,32 @@ export const ProcurementPricingModal: React.FC<ProcurementPricingModalProps> = (
   };
 
   useEffect(() => {
-    if (isOpen && centreId) {
+    const loadCrops = async () => {
+      let list = crops && crops.length > 0 ? crops : [];
+      if (list.length === 0) {
+        try {
+          const res = await centreApi.getCrops();
+          if (res.data && res.data.length > 0) {
+            list = res.data;
+          }
+        } catch (e) {
+          console.error('Failed to load crops in modal', e);
+        }
+      }
+      if (list.length === 0) {
+        list = DEFAULT_CROPS;
+      }
+      setAvailableCrops(list);
+      if (list.length > 0) {
+        setSelectedCropId(list[0]._id);
+      }
+    };
+
+    if (isOpen) {
       fetchPricingData();
-      if (crops.length > 0) setSelectedCropId(crops[0]._id);
+      loadCrops();
     }
-  }, [isOpen, centreId]);
+  }, [isOpen, centreId, crops]);
 
   if (!isOpen) return null;
 
@@ -69,7 +98,7 @@ export const ProcurementPricingModal: React.FC<ProcurementPricingModalProps> = (
 
     try {
       setLoading(true);
-      const crop = crops.find(c => c._id === selectedCropId);
+      const crop = availableCrops.find(c => c._id === selectedCropId);
       await pricingApi.createOrUpdatePrice({
         centreId,
         cropId: selectedCropId,
@@ -180,9 +209,9 @@ export const ProcurementPricingModal: React.FC<ProcurementPricingModalProps> = (
                 <select
                   value={selectedCropId}
                   onChange={(e) => setSelectedCropId(e.target.value)}
-                  className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold text-slate-900 cursor-pointer"
                 >
-                  {crops.map((c) => (
+                  {availableCrops.map((c) => (
                     <option key={c._id} value={c._id}>{c.name}</option>
                   ))}
                 </select>
