@@ -184,7 +184,18 @@ class AuthService {
         throw new BadRequestError('District Administrator registration must not include a centreId.', 'INVALID_DISTRICT_ADMIN_REGISTRATION');
       }
       if (!districtId && district) {
-        const distObj = await District.findOne({ name: new RegExp(district, 'i') });
+        let distObj = await District.findOne({ name: new RegExp(`^${district}$`, 'i') });
+        if (!distObj) {
+          distObj = await District.findOne({ name: new RegExp(district, 'i') });
+        }
+        if (!distObj && state) {
+          const code = (district.substring(0, 3) + '-' + Math.floor(100 + Math.random() * 900)).toUpperCase();
+          distObj = await District.create({
+            name: district,
+            code,
+            state: state || 'Telangana'
+          });
+        }
         if (distObj) districtId = distObj._id;
       }
       if (!districtId) {
